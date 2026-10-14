@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .models import PlayerProfile, Match, MatchRecord
 from .serializers import MatchRecordSerializer, PlayerProfileSerializer, UserDataSerializer
 from django.db import transaction
-from apps.utils import history_match as hm
+from backend.apps.pubg import gateway as pubg
 
 # Authentication and User Management
 def auth_profile(request, username, password):
@@ -186,43 +186,3 @@ def get_matches_record():
     serializer = MatchRecordSerializer(queryset, many=True)
     return serializer.data
 
-# Read last match from PUBG API and Save to Database
-def save_last_match(player_name="slyfoxcl"):    
-
-    custom_matches = hm.fetch_custom_matches(player_name)
-    if not custom_matches:
-        print("No se encontraron partidas custom recientes para este jugador.")
-        return None
-
-    for match_json in custom_matches:
-        attributes = match_json["data"]["attributes"]
-        match_id = match_json['data']['id']
-        player_scores = {}
-        attributes = match_json["data"]["attributes"]
-        print(f"\nPartida {match_json['data']['id']}")
-        print(f"Fecha: {attributes.get('createdAt')} | Mapa: {attributes.get('mapName')}")
-        print(f"{'Jugador':<20}{'Puesto':>7}{'Kills':>7}{'Asist.':>8}{'Daño':>9}{'Sobrev. (s)':>13}")
-        for stats in hm.get_participants(match_json):
-            marker = "*" if stats.get("name", "").lower() == player_name.lower() else " "
-            print(
-                f"{marker}{stats.get('name', '?'):<19}"
-                f"{stats.get('winPlace', 0):>7}"
-                f"{stats.get('kills', 0):>7}"
-                f"{stats.get('assists', 0):>8}"
-                f"{stats.get('damageDealt', 0):>9.0f}"
-                f"{stats.get('timeSurvived', 0):>13.0f}"
-            )
-        # for participant in attributes.get("participants", []):
-        #     player_name = participant.get("playerName")
-        #     kills = participant.get("stats", {}).get("kills", 0)
-        #     placement = "none"
-        #     win_place = participant.get("stats", {}).get("winPlace", 0)
-        #     if win_place == 1:
-        #         placement = "winner"
-        #     elif win_place == 2:
-        #         placement = "second"
-        #     player_scores[player_name] = {
-        #         "kills": kills,
-        #         "placement": placement
-        #     }
-        #create_match(match_id, player_scores)
