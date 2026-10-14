@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'dj_rest_auth',
     'apps.core',
+    'apps.utils',
 ]
 
 MIDDLEWARE = [
@@ -129,7 +130,7 @@ def get_connection_string(type_db='default'):
     return connection_string
 
 DATABASES = {
-    'default': get_connection_string('psql')
+    'default': get_connection_string()
 }
 
 
