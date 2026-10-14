@@ -1,188 +1,252 @@
-from urllib import request
+import logging
+import uuid
+
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import User
-from .models import PlayerProfile, Match, MatchRecord
-from .serializers import MatchRecordSerializer, PlayerProfileSerializer, UserDataSerializer
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from backend.apps.pubg import gateway as pubg
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
-# Authentication and User Management
+from .models import Match, MatchRecord, Player
+from .serializers import UserDataSerializer
+
+logger = logging.getLogger(__name__)
+
+
+class MatchPersistenceError(Exception):
+    """No se pudieron guardar las partidas obtenidas del gateway."""
+
+    status_code = 500
+    default_detail = "No se pudieron guardar las partidas."
+
+    def __init__(self, detail=None):
+        self.detail = detail or self.default_detail
+        super().__init__(self.detail)
+
+
+class MatchFetchError(MatchPersistenceError):
+    status_code = 502
+
+
+class MatchPlayerNotFoundError(MatchPersistenceError):
+    status_code = 404
+
+
 def auth_profile(request, username, password):
-
     user = authenticate(request, username=username, password=password)
-    if user is not None:
-        login(request, user)
-        serializer = UserDataSerializer(user)
-        return serializer.data
-    else:
-        return None 
-
-# Player Profile Management
-def get_player(player_name):
-    try:
-        player = PlayerProfile.objects.get(player_name=player_name)
-        serializer = UserDataSerializer(player)
-        return serializer.data
-    except PlayerProfile.DoesNotExist:
+    if user is None:
         return None
-    
+    login(request, user)
+    return UserDataSerializer(user).data
+
+
+def _player_payload(player):
+    return {"name": player.name, "totalPoints": 0}
+
+
 def get_all_players():
-    data = PlayerProfile.objects.all()
-    serializer = PlayerProfileSerializer(data, many=True)
-    return serializer.data
+    return [_player_payload(player) for player in Player.objects.all()]
+
+
+def get_player(player_name):
+    player = Player.objects.filter(pk=player_name).first()
+    if player is None:
+        return None
+    return _player_payload(player)
+
 
 def create_player(player_name):
     try:
-        player = PlayerProfile.objects.create(name=player_name)
-        player.save()
-        serializer = PlayerProfileSerializer(player)
-        return serializer.data
-    except Exception as e:
+        player, _created = Player.objects.get_or_create(name=player_name)
+    except Exception:
+        logger.exception("No se pudo crear el jugador %s", player_name)
         return None
+    return _player_payload(player)
 
 
 def delete_player(player_name):
-    try:
-        player = PlayerProfile.objects.get(name=player_name)
-        player.delete()
-        return True
-    except PlayerProfile.DoesNotExist:
-        return False
+    deleted, _rows = Player.objects.filter(pk=player_name).delete()
+    return deleted > 0
 
-# Match Management
+
 def get_match_by_id(match_id):
     try:
-        match = Match.objects.get(match_id=match_id)
-        return match
-    except Match.DoesNotExist:
+        return Match.objects.filter(match_id=match_id).first()
+    except (ValueError, ValidationError):
         return None
+
 
 def get_all_matches():
-    return Match.objects.all()  
+    return Match.objects.all()
 
-def create_match(m_id, player_scores):
-    match = None
+
+def delete_match(match_id):
     try:
-        with transaction.atomic():
-            # Create match
-            match = Match.objects.create(match_id=m_id)
-            
-            # Create match records for each player
-            for player_name, score in player_scores.items():
-                player = PlayerProfile.objects.get(name=player_name)
-                MatchRecord.objects.create(
-                    match_obj=match,
-                    player_obj=player,
-                    kills=score['kills'],
-                    placement=score['placement']
-                )
-            
-            # Update player total points
-            for player_name in player_scores.keys():
-                player = PlayerProfile.objects.get(name=player_name)
-                
-                # Calculate total points from all match records
-                total_points = 0
-                match_records = MatchRecord.objects.filter(player_obj=player)
-                
-                for record in match_records:
-                    points = record.kills
-                    if record.placement == 'winner':
-                        points += 3
-                    elif record.placement == 'second':
-                        points += 1
-                    total_points += points
-                
-                player.total_points = total_points
-                player.save()
-
-    except Exception as e:
-        return None
-    
-    return match
-
-def delete_match(m_id):
-    try:
-        with transaction.atomic():
-            # Get the match object
-            match = Match.objects.get(match_id=m_id)
-            
-            # Get all players that participated in this match
-            match_records = MatchRecord.objects.filter(match_obj=match)
-            affected_players = [record.player_obj for record in match_records]
-            
-            # Delete match records first
-            match_records.delete()
-            
-            # Delete the match
-            match.delete()
-            
-            # Recalculate total points for affected players
-            for player in affected_players:
-                total_points = 0
-                remaining_records = MatchRecord.objects.filter(player_obj=player)
-                
-                for record in remaining_records:
-                    points = record.kills
-                    if record.placement == 'winner':
-                        points += 3
-                    elif record.placement == 'second':
-                        points += 1
-                    total_points += points
-                
-                player.total_points = total_points
-                player.save()
-            
-            return True
-            
-    except Match.DoesNotExist:
-        print("Match does not exist")
+        deleted, _rows = Match.objects.filter(match_id=match_id).delete()
+    except (ValueError, ValidationError):
         return False
-    except Exception as e:
-        print("Error deleting match:", e)
-        return False
+    return deleted > 0
+
 
 def update_match(match, player_scores):
+    if not isinstance(player_scores, dict):
+        return False
+
+    normalized = []
+    for player_name, score in player_scores.items():
+        if not isinstance(score, dict):
+            return False
+        player = Player.objects.filter(pk=player_name).first()
+        if player is None:
+            continue
+        placement = score.get("placement") or "none"
+        normalized.append(
+            (
+                player,
+                _as_int(score.get("kills")),
+                {"winner": 1, "second": 2}.get(placement, 0),
+            )
+        )
+
     try:
         with transaction.atomic():
-            
-            # Update match records for each player
-            for player_name, score in player_scores.items():
-                player = PlayerProfile.objects.get(name=player_name)
-                match_record = MatchRecord.objects.get(match_obj=match, player_obj=player)
-                match_record.kills = score['kills']
-                match_record.placement = score['placement']
-                match_record.save()
-            
-            # Update player total points
-            for player_name in player_scores.keys():
-                player = PlayerProfile.objects.get(name=player_name)
-                
-                # Calculate total points from all match records
-                total_points = 0
-                match_records = MatchRecord.objects.filter(player_obj=player)
-                
-                for record in match_records:
-                    points = record.kills
-                    if record.placement == 'winner':
-                        points += 3
-                    elif record.placement == 'second':
-                        points += 1
-                    total_points += points
-                
-                player.total_points = total_points
-                player.save()
-
-            return True
-
-    except Match.DoesNotExist:
+            for player, kills, win_place in normalized:
+                MatchRecord.objects.update_or_create(
+                    match=match,
+                    player=player,
+                    defaults={"kills": kills, "win_place": win_place},
+                )
+    except Exception:
+        logger.exception("No se pudo actualizar la partida %s", match.match_id)
         return False
-    return False
+    return True
 
 
-# Match Records Management
 def get_matches_record():
-    queryset = Match.objects.all()
-    serializer = MatchRecordSerializer(queryset, many=True)
-    return serializer.data
+    matches = Match.objects.prefetch_related("matchrecord_set__player").all()
+    payload = []
+    for match in matches:
+        player_scores = {}
+        for record in match.matchrecord_set.all():
+            if record.win_place == 1:
+                placement = "winner"
+            elif record.win_place == 2:
+                placement = "second"
+            else:
+                placement = "none"
+            player_scores[record.player.name] = {
+                "kills": record.kills,
+                "placement": placement,
+            }
+        payload.append(
+            {"id": str(match.match_id), "playerScores": player_scores}
+        )
+    return payload
 
+
+def save_matches():
+    """Pide las partidas al gateway de PUBG y las guarda en los modelos."""
+    player_name = "slyfoxcl"
+    
+    matches_json = _fetch_matches(player_name)
+    if not isinstance(matches_json, dict):
+        raise MatchFetchError()
+
+    try:
+        with transaction.atomic():
+            saved = [
+                _persist_match(match_id, payload)
+                for match_id, payload in matches_json.items()
+            ]
+    except MatchPersistenceError:
+        raise
+    except Exception as exc:
+        logger.exception("No se pudieron guardar las partidas de %s", player_name)
+        raise MatchPersistenceError() from exc
+    return saved
+
+
+def _fetch_matches(player_name):
+    try:
+        from apps.pubg.gateway import get_matches
+
+        return get_matches(player_name)
+    except ValueError as exc:
+        logger.exception("No se encontró al jugador %s en PUBG", player_name)
+        raise MatchPlayerNotFoundError() from exc
+    except Exception as exc:
+        logger.exception("No se pudieron obtener las partidas de %s", player_name)
+        raise MatchFetchError() from exc
+
+
+def _persist_match(match_id, payload):
+    if not isinstance(payload, dict):
+        raise MatchFetchError()
+
+    try:
+        match_uuid = uuid.UUID(str(match_id))
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise MatchFetchError() from exc
+
+    match, _created = Match.objects.update_or_create(
+        match_id=match_uuid,
+        defaults={
+            "created_at": _match_created_at(payload.get("createdAt")),
+            "map_name": (payload.get("map") or payload.get("mapName") or "")[:100],
+        },
+    )
+
+    participants = payload.get("participants") or []
+    if not isinstance(participants, list):
+        raise MatchFetchError()
+
+    records = []
+    seen_names = set()
+    for stats in participants:
+        if not isinstance(stats, dict):
+            continue
+        name = (stats.get("name") or "").strip()
+        if not name or name in seen_names:
+            continue
+        seen_names.add(name)
+        player, _created = Player.objects.get_or_create(name=name[:100])
+        death_type = (stats.get("deathType") or "")[:50]
+        records.append(
+            MatchRecord(
+                match=match,
+                player=player,
+                kills=_as_int(stats.get("kills")),
+                assists=_as_int(stats.get("assists")),
+                damage_dealt=_as_float(stats.get("damageDealt")),
+                time_survived=_as_float(stats.get("timeSurvived")),
+                win_place=_as_int(stats.get("winPlace")),
+                death_type=death_type or None,
+            )
+        )
+
+    MatchRecord.objects.filter(match=match).delete()
+    MatchRecord.objects.bulk_create(records)
+    return match
+
+
+def _match_created_at(created_at):
+    parsed = parse_datetime(created_at) if isinstance(created_at, str) else None
+    if parsed is None:
+        return timezone.now()
+    if timezone.is_naive(parsed):
+        return timezone.make_aware(parsed, timezone.utc)
+    return parsed
+
+
+def _as_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default

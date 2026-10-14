@@ -3,7 +3,8 @@ from django.db import models
 from django.utils import timezone
 
 class Tournament(models.Model):
-    name = models.CharField(primary_key=True, max_length=100)
+    name = models.CharField(max_length=100)
+    rules = models.TextField()
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 
@@ -11,7 +12,7 @@ class Tournament(models.Model):
         return self.name
 
 class Player(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(primary_key=True, max_length=100)
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -19,7 +20,12 @@ class Player(models.Model):
 
 class Match(models.Model):
     match_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    tournament = models.ForeignKey(Tournament, on_delete=models.CASCADE)
+    tournament = models.ForeignKey(
+        Tournament,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(default=timezone.now)
     map_name = models.CharField(max_length=100)
 

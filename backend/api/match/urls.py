@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.urls import path
-from .apiviews import MatchRecordView, MatchView
+from .apiviews import Match, MatchRecordView
 
 urlpatterns = [
     path('records/', MatchRecordView.as_view()),
-    path('<str:match_id>', MatchView.as_view()),
-    path('create/', MatchView.as_view()),  
+    path('<str:match_id>', Match.as_view()),
+    path('create/', Match.as_view()),  
 ]

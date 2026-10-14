@@ -6,7 +6,6 @@ from rest_framework.status import (
 )
 from rest_framework.response import Response
 from apps.core.utils import create_player, get_player, get_all_players, delete_player
-from apps.core.serializers import PlayerProfileSerializer
 
 class PlayerApiView(APIView):
     """

@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+from functools import wraps
 from pathlib import Path
 from .api import PUBGAPI
 
@@ -15,7 +16,24 @@ def get_pubg_api_key():
         raise RuntimeError("Configura la variable de entorno PUBG_API_KEY.")
     return API_KEY
 
-api = PUBGAPI(api_key=get_pubg_api_key())
+_api = None
+
+
+def pubg_api(func):
+    """Entrega a la función la instancia de PUBGAPI que habla con la API."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(_pubg_api(), *args, **kwargs)
+
+    return wrapper
+
+
+def _pubg_api():
+    global _api
+    if _api is None:
+        _api = PUBGAPI(api_key=get_pubg_api_key())
+    return _api
 
 # mapName de la API → nombre que muestra el juego.
 # Baltic_Main es el Erangel actual; Erangel_Main es el mapa original.
@@ -69,7 +87,8 @@ def get_participants(match_json):
         key=lambda stats: (stats.get("winPlace", 0), -stats.get("kills", 0)),
     )
 
-def print_matches():
+@pubg_api
+def print_matches(api):
     player_name = "slyfoxcl"  # Default player name
 
     custom_matches = api.fetch_custom_matches(player_name)
@@ -97,7 +116,9 @@ def print_matches():
             )
         
 
-def get_matches(player_name="slyfoxcl"):
+@pubg_api
+def get_matches(api):
+    player_name="slyfoxcl"
     """
     Devuelve un dict por match_id con fecha, mapa y los jugadores de la tabla.
     """
