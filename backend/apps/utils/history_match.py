@@ -52,7 +52,7 @@ def fetch_custom_matches(player_name):
             custom_matches.append(match_json)
     return custom_matches
 
-def main():
+def test():
     player_name = "slyfoxcl"  # Default player name
 
     custom_matches = fetch_custom_matches(player_name)
@@ -74,6 +74,3 @@ def main():
                 f"{stats.get('timeSurvived', 0):>13.0f}"
             )
 
-
-if __name__ == "__main__":
-    main()

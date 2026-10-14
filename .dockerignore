@@ -41,9 +41,9 @@ staticfiles/
 # Environment
 .env
 .env.local
+**/.env*
 
 # Tests
 .pytest_cache/
 .coverage
 htmlcov/
-

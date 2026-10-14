@@ -2,51 +2,18 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend.Dockerfile
-    container_name: contador-backend
+      dockerfile: backend/.dockerfile
     environment:
-      DJANGO_DEBUG: ${DJANGO_DEBUG}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      SECRET_KEY: ${SECRET_KEY:-django-insecure-23v(z24j2ev07ihftj22&_y-mmw0)=pghp-xtq1ets=gv)wpgk}
-    networks:
-      - contador-network
-    expose:
-      - "8000"
+    # Django Settings
+      - DJANGO_DEBUG=False
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - SECRET_KEY=your-secret-key-here-change-this-in-production
+
+      #API Key PUBG
+      - PUBG_API_KEY=key-goes-here-change-this-in-production
+    ports:
+      - "8000:8000"
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             gunicorn cpoints.wsgi:application --bind 0.0.0.0:8000 --workers 4"
-
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend.Dockerfile
-    container_name: contador-frontend
-    depends_on:
-      - backend
-    networks:
-      - contador-network
-    ports:
-      - "80:80"
-    environment:
-      API_URL: http://backend:8000
-
-  nginx:
-    image: nginx:alpine
-    container_name: contador-nginx
-    ports:
-      - "8080:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - contador-network
-networks:
-  contador-network:
-    driver: bridge
+             exec gunicorn cpoints.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    restart: unless-stopped
