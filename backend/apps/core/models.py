@@ -3,7 +3,7 @@ from django.db import models
 from django.utils import timezone
 
 class Tournament(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(primary_key=True, max_length=100)
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
 
@@ -30,6 +30,9 @@ class MatchRecord(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     kills = models.IntegerField(default=0)
+    assists = models.IntegerField(default=0)
+    damage_dealt = models.FloatField(default=0.0)
+    time_survived = models.FloatField(default=0.0)
     win_place = models.IntegerField(default=0)
     death_type = models.CharField(max_length=50, blank=True, null=True)
 
