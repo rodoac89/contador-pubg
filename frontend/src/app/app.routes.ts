@@ -1,3 +1,5 @@
 import { Routes } from '@angular/router';
 
-export const routes: Routes = [];
+import { Standings } from './standings/standings';
+
+export const routes: Routes = [{ path: '', component: Standings }];

@@ -2,14 +2,38 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm",
-    "analytics": "e176420a-c712-406e-8c05-f044f3f45f34"
+    "packageManager": "npm"
   },
   "newProjectRoot": "projects",
   "projects": {
     "contador": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:class": {
+          "skipTests": true
+        },
+        "@schematics/angular:component": {
+          "skipTests": true
+        },
+        "@schematics/angular:directive": {
+          "skipTests": true
+        },
+        "@schematics/angular:guard": {
+          "skipTests": true
+        },
+        "@schematics/angular:interceptor": {
+          "skipTests": true
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": true
+        },
+        "@schematics/angular:resolver": {
+          "skipTests": true
+        },
+        "@schematics/angular:service": {
+          "skipTests": true
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
@@ -26,7 +50,6 @@
               }
             ],
             "styles": [
-              "src/custom-theme.scss",
               "src/styles.css"
             ]
           },
@@ -57,8 +80,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": {
-            "allowedHosts": ["pubg.rodonet.work"],
-            "host": "0.0.0.0"
+            "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
             "production": {
@@ -69,9 +91,6 @@
             }
           },
           "defaultConfiguration": "development"
-        },
-        "test": {
-          "builder": "@angular/build:unit-test"
         }
       }
     }

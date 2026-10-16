@@ -13,7 +13,19 @@ services:
       - PUBG_API_KEY=key-goes-here-change-this-in-production
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/db.sqlite3:/app/db.sqlite3
     command: >
       sh -c "python manage.py migrate &&
              exec gunicorn cpoints.wsgi:application --bind 0.0.0.0:8000 --workers 4"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
     restart: unless-stopped
