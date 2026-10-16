@@ -5,12 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Django: Debug Server",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "${workspaceFolder}/backend/manage.py",
+            "args": [
+                "runserver",
+                "0.0.0.0:8000",
+                "--noreload"
+            ],
+            "subProcess": true,
+            "django": true,
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}/backend",
+            "python": "${command:python.interpreterPath}",
             "console": "integratedTerminal",
-            "python": "${command:python.interpreterPath}"
-        },
+            "envFile": "${workspaceFolder}/backend/.env",
+            "env": {
+                "DJANGO_SETTINGS_MODULE": "cpoints.settings"
+            }
+        }
     ]
 }

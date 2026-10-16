@@ -1,8 +1,5 @@
-import argparse
 import os
-import sys
 from functools import wraps
-from pathlib import Path
 from .api import PUBGAPI
 
 def get_pubg_api_key():
@@ -117,12 +114,12 @@ def print_matches(api):
         
 
 @pubg_api
-def get_matches(api):
+def get_matches(api, bulk=False):
     player_name="slyfoxcl"
     """
     Devuelve un dict por match_id con fecha, mapa y los jugadores de la tabla.
     """
-    custom_matches = api.fetch_custom_matches(player_name)
+    custom_matches = api.fetch_custom_match(player_name) if bulk else api.fetch_custom_match(player_name, items=1)
     matches = {}
     for match_json in custom_matches:
         attributes = match_json["data"]["attributes"]

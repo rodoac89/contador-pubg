@@ -9,27 +9,14 @@ from django.utils.dateparse import parse_datetime
 
 from .models import Match, MatchRecord, Player
 from .serializers import UserDataSerializer
+from .exceptions import (
+    MatchFetchError, 
+    MatchPersistenceError, 
+    MatchPlayerNotFoundError
+    )
+from apps.pubg.gateway import get_matches
 
 logger = logging.getLogger(__name__)
-
-
-class MatchPersistenceError(Exception):
-    """No se pudieron guardar las partidas obtenidas del gateway."""
-
-    status_code = 500
-    default_detail = "No se pudieron guardar las partidas."
-
-    def __init__(self, detail=None):
-        self.detail = detail or self.default_detail
-        super().__init__(self.detail)
-
-
-class MatchFetchError(MatchPersistenceError):
-    status_code = 502
-
-
-class MatchPlayerNotFoundError(MatchPersistenceError):
-    status_code = 404
 
 
 def auth_profile(request, username, password):
@@ -144,11 +131,10 @@ def get_matches_record():
     return payload
 
 
-def save_matches():
+def save_match(bulk=False):
     """Pide las partidas al gateway de PUBG y las guarda en los modelos."""
-    player_name = "slyfoxcl"
     
-    matches_json = _fetch_matches(player_name)
+    matches_json = _fetch_matches(bulk) if bulk else _fetch_matches()
     if not isinstance(matches_json, dict):
         raise MatchFetchError()
 
@@ -161,21 +147,20 @@ def save_matches():
     except MatchPersistenceError:
         raise
     except Exception as exc:
-        logger.exception("No se pudieron guardar las partidas de %s", player_name)
+        logger.exception("No se pudieron guardar las partidas")
         raise MatchPersistenceError() from exc
     return saved
 
 
-def _fetch_matches(player_name):
-    try:
-        from apps.pubg.gateway import get_matches
 
-        return get_matches(player_name)
+def _fetch_matches(bulk=False):
+    try:
+        return get_matches(bulk)
     except ValueError as exc:
-        logger.exception("No se encontró al jugador %s en PUBG", player_name)
+        logger.exception("No se encontró al jugador en PUBG")
         raise MatchPlayerNotFoundError() from exc
     except Exception as exc:
-        logger.exception("No se pudieron obtener las partidas de %s", player_name)
+        logger.exception("No se pudieron obtener las partidas")
         raise MatchFetchError() from exc
 
 

@@ -1,4 +1,4 @@
-import os, requests
+import requests
 
 class PUBGAPI:
     def __init__(self, api_key="", platform="steam"):
@@ -9,7 +9,7 @@ class PUBGAPI:
             "Accept": "application/vnd.api+json",
         }
 
-    def fetch_custom_matches(self, player_name):
+    def fetch_custom_match(self, player_name="", items=14, order_by="desc"):
         """
         Obtiene las partidas personalizadas de un jugador específico.
         Args:
@@ -29,7 +29,7 @@ class PUBGAPI:
             raise ValueError(f"No se encontró al jugador {player_name!r}.")
 
         custom_matches = []
-        for player_match in players[0]["relationships"]["matches"]["data"]:
+        for  player_match in players[0]["relationships"]["matches"]["data"]:            
             match_id = player_match["id"]
             response = requests.get(
                 f"{self.base_url}/matches/{match_id}",
@@ -40,6 +40,8 @@ class PUBGAPI:
             match_json = response.json()
             if match_json["data"].get("attributes", {}).get("isCustomMatch") is True:
                 custom_matches.append(match_json)
+            if len(custom_matches) >= items:
+                break
         return custom_matches
 
     def find_latest_custom_match(self, player_names: list[str]) -> str | None:
