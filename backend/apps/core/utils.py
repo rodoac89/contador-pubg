@@ -110,26 +110,25 @@ def update_match(match, player_scores):
 
 
 def get_matches_record():
-    matches = Match.objects.prefetch_related("matchrecord_set__player").all()
-    payload = []
-    for match in matches:
-        player_scores = {}
-        for record in match.matchrecord_set.all():
-            if record.win_place == 1:
-                placement = "winner"
-            elif record.win_place == 2:
-                placement = "second"
-            else:
-                placement = "none"
-            player_scores[record.player.name] = {
-                "kills": record.kills,
-                "placement": placement,
-            }
-        payload.append(
-            {"id": str(match.match_id), "playerScores": player_scores}
-        )
-    return payload
+    """Tabla con la sumatoria de puntos de cada jugador en todas las partidas.
 
+    1 punto por kill, 1 al ganador, -1 por morir en la zona.
+    """
+    totals = {}
+    for record in MatchRecord.objects.select_related("player"):
+        row = totals.setdefault(
+            record.player.name,
+            {"player": record.player.name, "matches": 0, "kills": 0,
+             "wins": 0, "zoneDeaths": 0, "score": 0},
+        )
+        won = record.win_place == 1
+        zone_death = record.death_type == "byzone"
+        row["matches"] += 1
+        row["kills"] += record.kills
+        row["wins"] += int(won)
+        row["zoneDeaths"] += int(zone_death)
+        row["score"] += record.kills + int(won) - int(zone_death)
+    return sorted(totals.values(), key=lambda r: (-r["score"],     r["player"]))
 
 def save_match(bulk=False):
     """Pide las partidas al gateway de PUBG y las guarda en los modelos."""
