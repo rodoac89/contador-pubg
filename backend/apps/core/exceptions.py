@@ -15,3 +15,4 @@ class MatchFetchError(MatchPersistenceError):
 
 class MatchPlayerNotFoundError(MatchPersistenceError):
     status_code = 404
+    default_detail = "No se encontró al jugador en PUBG."

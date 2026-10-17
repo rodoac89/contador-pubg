@@ -140,6 +140,22 @@ td {
   font-size: 0.85rem;
 }
 
+.admin-link {
+  margin: 2rem 0 0;
+}
+
+.admin-link a {
+  color: #8f8a80;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.admin-link a:hover {
+  color: #ffcc34;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

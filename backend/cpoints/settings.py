@@ -122,7 +122,7 @@ def get_connection_string(type_db='default'):
     if type_db == 'default':
         connection_string = {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': os.getenv('SQLITE_PATH', BASE_DIR / 'db.sqlite3'),
         }
     else:
         connection_string = {

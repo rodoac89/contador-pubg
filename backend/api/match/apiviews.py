@@ -1,3 +1,4 @@
+from django.db.models import Count
 from rest_framework.views import APIView
 from rest_framework.status import (
     HTTP_404_NOT_FOUND,
@@ -6,37 +7,84 @@ from rest_framework.status import (
     HTTP_201_CREATED,
 )
 from rest_framework.response import Response
+
+from api.permissions import IsAdmin
 from apps.core.exceptions import MatchPersistenceError
-from apps.core.utils import (
-    get_all_matches,
-    get_match_by_id,
-    get_matches_record,
-    save_match,
-)
-from apps.core.serializers import MatchSerializer
+from apps.core.models import Match as MatchModel
+from apps.core.utils import get_match_by_id, get_matches_record, save_match
+from apps.pubg.gateway import death_reason
+
+
+def _player_name(request):
+    raw = request.data.get("player_name")
+    if not isinstance(raw, str):
+        return None
+    name = raw.strip()
+    if not name:
+        return None
+    return name[:100]
+
+
+def _match_summary(match):
+    return {
+        "matchId": str(match.match_id),
+        "mapName": match.map_name,
+        "createdAt": match.created_at.isoformat(),
+        "training": match.training,
+        "participantCount": match.participant_count,
+    }
+
+
+def _match_detail(match):
+    participants = []
+    records = match.matchrecord_set.select_related("player").order_by(
+        "win_place",
+        "-kills",
+        "player__name",
+    )
+    for record in records:
+        participants.append(
+            {
+                "player": record.player.name,
+                "place": record.win_place,
+                "kills": record.kills,
+                "assists": record.assists,
+                "damage": record.damage_dealt,
+                "timeSurvived": record.time_survived,
+                "death": death_reason(record.death_type),
+            }
+        )
+    return {
+        "matchId": str(match.match_id),
+        "mapName": match.map_name,
+        "createdAt": match.created_at.isoformat(),
+        "training": match.training,
+        "participants": participants,
+    }
 
 
 class Match(APIView):
-    
-    action_method = None 
-
+    permission_classes = [IsAdmin]
+    action_method = None
 
     def post(self, request, *args, **kwargs):
-
         handler = getattr(self, self.action_method, None)
-        
         if not handler:
-            return Response({"error": "Acción no configurada"}, status=400)
+            return Response({"detail": "Acción no configurada."}, status=HTTP_400_BAD_REQUEST)
         return handler(request)
 
     def _post_save_match(self, request):
-        """
-        Endpoint para cargar la(s) última(s) partida(s) desde el gateway de PUBG.
-        """
+        """Carga la última partida, o varias si bulk=true, del usuario indicado."""
+        player_name = _player_name(request)
+        if player_name is None:
+            return Response(
+                {"detail": "Ingresa el usuario para traer las partidas."},
+                status=HTTP_400_BAD_REQUEST,
+            )
 
+        bulk = request.GET.get("bulk", "false") in ["true", "1"]
         try:
-            bulk = request.GET.get('bulk', 'false') in ['true', '1']
-            saved = save_match(bulk)
+            saved = save_match(player_name, bulk=bulk)
         except MatchPersistenceError as exc:
             return Response({"detail": exc.detail}, status=exc.status_code)
 
@@ -49,8 +97,41 @@ class Match(APIView):
         )
 
 
-
 class MatchRecordView(APIView):
     def get(self, request):
-        matches_record = get_matches_record()
-        return Response(matches_record, status=HTTP_200_OK)
+        return Response(get_matches_record(), status=HTTP_200_OK)
+
+
+class MatchListView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        matches = MatchModel.objects.annotate(participant_count=Count("matchrecord")).order_by(
+            "-created_at",
+            "match_id",
+        )
+        return Response([_match_summary(match) for match in matches], status=HTTP_200_OK)
+
+
+class MatchDetailView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, match_id):
+        match = get_match_by_id(match_id)
+        if match is None:
+            return Response({"detail": "No se encontró la partida."}, status=HTTP_404_NOT_FOUND)
+        return Response(_match_detail(match), status=HTTP_200_OK)
+
+    def patch(self, request, match_id):
+        match = get_match_by_id(match_id)
+        if match is None:
+            return Response({"detail": "No se encontró la partida."}, status=HTTP_404_NOT_FOUND)
+        training = request.data.get("training")
+        if not isinstance(training, bool):
+            return Response(
+                {"detail": "Indica si la partida es de entrenamiento."},
+                status=HTTP_400_BAD_REQUEST,
+            )
+        match.training = training
+        match.save(update_fields=["training"])
+        return Response(_match_detail(match), status=HTTP_200_OK)

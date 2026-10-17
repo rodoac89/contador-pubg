@@ -114,12 +114,19 @@ def print_matches(api):
         
 
 @pubg_api
-def get_matches(api, bulk=False):
-    player_name="slyfoxcl"
+def get_matches(api, player_name, bulk=False):
     """
     Devuelve un dict por match_id con fecha, mapa y los jugadores de la tabla.
+    Sin bulk trae solo la partida custom más reciente de ese usuario.
     """
-    custom_matches = api.fetch_custom_match(player_name) if bulk else api.fetch_custom_match(player_name, items=1)
+    player_name = player_name.strip() if isinstance(player_name, str) else ""
+    if not player_name:
+        raise ValueError("Falta el usuario.")
+    custom_matches = (
+        api.fetch_custom_match(player_name)
+        if bulk
+        else api.fetch_custom_match(player_name, items=1)
+    )
     matches = {}
     for match_json in custom_matches:
         attributes = match_json["data"]["attributes"]

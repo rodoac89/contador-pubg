@@ -1,10 +1,12 @@
 import { httpResource } from '@angular/common/http';
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { parseRecords, PlayerRecord, RECORDS_URL } from '../player-record';
 
 @Component({
   selector: 'app-standings',
+  imports: [RouterLink],
   templateUrl: './standings.html',
   styleUrl: './standings.css',
 })

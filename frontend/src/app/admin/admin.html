@@ -1,0 +1,8 @@
+<nav class="admin-nav" aria-label="Administración">
+  <a routerLink="/admin/cargar" routerLinkActive="active">Cargar</a>
+  <a routerLink="/admin/partidas" routerLinkActive="active">Partidas</a>
+  <a routerLink="/">Tabla</a>
+  <span class="who">{{ username() }}</span>
+  <button type="button" class="ghost" (click)="logout()">Salir</button>
+</nav>
+<router-outlet />

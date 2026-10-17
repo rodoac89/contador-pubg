@@ -1,0 +1,40 @@
+<section class="board" aria-labelledby="load-title">
+  <h1 id="load-title">Cargar partidas</h1>
+  <p class="lede">
+    La última partida pide el usuario de PUBG. La carga completa trae varias partidas de ese mismo usuario.
+  </p>
+
+  <div class="actions">
+    <button type="button" class="primary" (click)="chooseLatest()" [disabled]="busy()">
+      Cargar última partida
+    </button>
+    <button type="button" class="secondary" (click)="chooseBulk()" [disabled]="busy()">
+      Cargar todas
+    </button>
+  </div>
+
+  @if (asking()) {
+    <form (submit)="submit($event)">
+      <label class="field">
+        Usuario
+        <input
+          name="player"
+          [value]="playerName()"
+          (input)="onPlayer($event)"
+          autocomplete="off"
+          required
+        />
+      </label>
+      <button type="submit" class="primary" [disabled]="busy()">
+        {{ bulk() ? 'Traer todas' : 'Traer partida' }}
+      </button>
+    </form>
+  }
+
+  @if (message()) {
+    <p class="ok" role="status">{{ message() }}</p>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+</section>

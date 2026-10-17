@@ -13,4 +13,7 @@ FROM nginx:alpine
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/contador/browser /usr/share/nginx/html
 
-EXPOSE 8030
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1/api/health/ || exit 1

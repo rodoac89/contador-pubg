@@ -1,0 +1,94 @@
+<section class="board" aria-labelledby="matches-title">
+  <h1 id="matches-title">Partidas</h1>
+  <p class="lede">Las de entrenamiento no suman en la tabla pública.</p>
+
+  @if (matches.error()) {
+    <p class="state state-error" role="alert">No se pudieron cargar las partidas.</p>
+    <button type="button" class="secondary" (click)="matches.reload()">Reintentar</button>
+  } @else if (matches.isLoading()) {
+    <p class="state">Cargando partidas…</p>
+  } @else if (matches.value().length === 0) {
+    <p class="state">Todavía no hay partidas registradas.</p>
+  } @else {
+    <div class="table-wrap">
+      <table>
+        <caption class="sr-only">Partidas cargadas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Fecha</th>
+            <th scope="col">Mapa</th>
+            <th scope="col" class="num">Jugadores</th>
+            <th scope="col">Entrenamiento</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (match of matches.value(); track match.matchId) {
+            <tr [class.selected]="selectedId() === match.matchId">
+              <td>
+                <button type="button" class="row-button" (click)="select(match.matchId)">
+                  {{ formatDate(match.createdAt) }}
+                </button>
+              </td>
+              <td>{{ match.mapName }}</td>
+              <td class="num">{{ match.participantCount }}</td>
+              <td>
+                <label class="check">
+                  <input
+                    type="checkbox"
+                    [checked]="match.training"
+                    [disabled]="savingId() === match.matchId"
+                    (change)="onTraining(match, $event)"
+                  />
+                  {{ match.training ? 'Sí' : 'No' }}
+                </label>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  @if (selectedId()) {
+    <section class="detail" aria-labelledby="detail-title">
+      <h2 id="detail-title">Participantes</h2>
+      @if (detail.error()) {
+        <p class="state state-error" role="alert">No se pudo abrir la partida.</p>
+      } @else if (detail.isLoading() || !detail.value()) {
+        <p class="state">Cargando participantes…</p>
+      } @else {
+        <p class="lede">{{ detail.value()!.mapName }} · {{ formatDate(detail.value()!.createdAt) }}</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col" class="num">Puesto</th>
+                <th scope="col">Jugador</th>
+                <th scope="col" class="num">Bajas</th>
+                <th scope="col" class="num">Asist.</th>
+                <th scope="col" class="num">Daño</th>
+                <th scope="col">Muerte</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (person of detail.value()!.participants; track person.player) {
+                <tr>
+                  <td class="num">{{ person.place }}</td>
+                  <td>{{ person.player }}</td>
+                  <td class="num">{{ person.kills }}</td>
+                  <td class="num">{{ person.assists }}</td>
+                  <td class="num">{{ person.damage }}</td>
+                  <td>{{ person.death }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</section>

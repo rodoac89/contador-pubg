@@ -115,7 +115,7 @@ def get_matches_record():
     1 punto por kill, 1 al ganador, -1 por morir en la zona.
     """
     totals = {}
-    for record in MatchRecord.objects.select_related("player"):
+    for record in MatchRecord.objects.select_related("player").filter(match__training=False):
         row = totals.setdefault(
             record.player.name,
             {"player": record.player.name, "matches": 0, "kills": 0,
@@ -130,10 +130,10 @@ def get_matches_record():
         row["score"] += record.kills + int(won) - int(zone_death)
     return sorted(totals.values(), key=lambda r: (-r["score"],     r["player"]))
 
-def save_match(bulk=False):
+def save_match(player_name, bulk=False):
     """Pide las partidas al gateway de PUBG y las guarda en los modelos."""
-    
-    matches_json = _fetch_matches(bulk) if bulk else _fetch_matches()
+
+    matches_json = _fetch_matches(player_name, bulk=bulk)
     if not isinstance(matches_json, dict):
         raise MatchFetchError()
 
@@ -152,9 +152,9 @@ def save_match(bulk=False):
 
 
 
-def _fetch_matches(bulk=False):
+def _fetch_matches(player_name, bulk=False):
     try:
-        return get_matches(bulk)
+        return get_matches(player_name, bulk=bulk)
     except ValueError as exc:
         logger.exception("No se encontró al jugador en PUBG")
         raise MatchPlayerNotFoundError() from exc

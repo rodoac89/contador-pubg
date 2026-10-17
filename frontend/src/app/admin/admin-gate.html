@@ -1,0 +1,64 @@
+<section class="board" aria-labelledby="gate-title">
+  @if (setup.isLoading()) {
+    <p class="state">Cargando…</p>
+  } @else if (setup.error()) {
+    <p class="state state-error" role="alert">No se pudo consultar el registro.</p>
+    <button type="button" class="secondary" (click)="setup.reload()">Reintentar</button>
+  } @else {
+    <h1 id="gate-title">
+      {{ setup.value().registrationOpen ? 'Crear administración' : 'Administración' }}
+    </h1>
+    @if (setup.value().registrationOpen) {
+      <p class="lede">
+        La primera cuenta queda como administración. Después el registro se cierra.
+      </p>
+    } @else {
+      <p class="lede">Entra con la cuenta de administración.</p>
+    }
+
+    <form (submit)="submit($event)">
+      <label class="field">
+        Usuario
+        <input
+          name="username"
+          autocomplete="username"
+          [value]="username()"
+          (input)="onUsername($event)"
+          required
+        />
+      </label>
+      <label class="field">
+        Contraseña
+        <input
+          name="password"
+          type="password"
+          [attr.autocomplete]="setup.value().registrationOpen ? 'new-password' : 'current-password'"
+          [value]="password()"
+          (input)="onPassword($event)"
+          required
+        />
+      </label>
+      @if (setup.value().registrationOpen) {
+        <label class="field">
+          Repetir contraseña
+          <input
+            name="confirm"
+            type="password"
+            autocomplete="new-password"
+            [value]="confirm()"
+            (input)="onConfirm($event)"
+            required
+          />
+        </label>
+        <p class="hint">Mínimo 8 caracteres.</p>
+      }
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+      <button type="submit" class="primary" [disabled]="busy()">
+        {{ setup.value().registrationOpen ? 'Crear cuenta' : 'Entrar' }}
+      </button>
+    </form>
+  }
+  <p class="hint"><a routerLink="/">Volver a la tabla</a></p>
+</section>
