@@ -20,6 +20,7 @@ class Player(models.Model):
 
 class Match(models.Model):
     match_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    training = models.BooleanField(default=False)
     tournament = models.ForeignKey(
         Tournament,
         on_delete=models.CASCADE,

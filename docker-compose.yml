@@ -1,8 +1,6 @@
 services:
   backend:
-    build:
-      context: .
-      dockerfile: backend/.dockerfile
+    image: tea.rodoaravena.cl/rodoac/contador-pubg-backend:latest
     environment:
     # Django Settings
       - DJANGO_DEBUG=False
@@ -14,16 +12,14 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/db.sqlite3:/app/db.sqlite3
+      - ./{APP_DIRECTORY}/backend/db.sqlite3:/app/db.sqlite3
     command: >
       sh -c "python manage.py migrate &&
              exec gunicorn cpoints.wsgi:application --bind 0.0.0.0:8000 --workers 4"
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ea.rodoaravena.cl/rodoac/contador-pubg-frontend:latest
     ports:
       - "4200:80"
     depends_on:
