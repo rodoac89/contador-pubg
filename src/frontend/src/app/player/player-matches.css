@@ -1,0 +1,158 @@
+.board {
+  margin-top: 2.5rem;
+  max-width: 68rem;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lede,
+.legend,
+.state,
+.tile time {
+  color: #b7b1a4;
+}
+
+.lede {
+  margin: 0.35rem 0 1.25rem;
+}
+
+.state-error {
+  color: #ffb4a2;
+}
+
+.retry {
+  margin-top: 0.75rem;
+  border: 1px solid #ffcc34;
+  background: transparent;
+  color: #ffcc34;
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.retry:hover {
+  background: #ffcc34;
+  color: #000;
+}
+
+.back {
+  margin: 0 0 0.8rem;
+}
+
+.back a {
+  color: #8f8a80;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.back a:hover,
+.back a:focus-visible {
+  color: #ffcc34;
+}
+
+.mosaic {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  align-items: stretch;
+}
+
+.tile {
+  flex: 1 1 17rem;
+  max-width: 22rem;
+  border: 1px solid #242424;
+  border-top: 1px solid rgba(255, 204, 52, 0.55);
+  background: #0a0a0a;
+}
+
+.tile.warmup {
+  border-top-color: #d08a45;
+}
+
+.tile header {
+  padding: 0.85rem 0.9rem 0.65rem;
+}
+
+.map {
+  margin: 0.2rem 0 0;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-size: 1.25rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge {
+  margin: 0.4rem 0 0;
+  color: #d08a45;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tile table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tile th,
+.tile td {
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid #242424;
+}
+
+.tile th {
+  color: #8f8a80;
+  font-weight: 500;
+  text-align: left;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.points {
+  color: #ffcc34;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.zone-yes {
+  color: #ffb4a2;
+}
+
+.legend {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .tile {
+    flex-basis: 100%;
+    max-width: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

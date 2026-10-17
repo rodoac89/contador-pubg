@@ -1,9 +1,0 @@
-.git
-frontend/.angular
-frontend/.vscode
-frontend/dist
-frontend/node_modules
-backend
-.env
-**/.env
-**/.env.*

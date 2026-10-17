@@ -1,0 +1,22 @@
+<section class="board" aria-labelledby="standings-title">
+  <h1 id="standings-title">Posiciones</h1>
+  <p class="lede">
+    Puntaje y daño acumulados. Las de calentamiento no suman aquí; se ven al abrir un jugador.
+  </p>
+  <p class="matches-link"><a routerLink="/partidas">Ver partidas</a></p>
+
+  @if (records.error()) {
+    <p class="state state-error" role="alert">No se pudo cargar la tabla de posiciones.</p>
+    <button type="button" class="retry" (click)="records.reload()">Reintentar</button>
+  } @else if (records.isLoading()) {
+    <p class="state">Cargando posiciones…</p>
+  } @else if (records.value().length === 0) {
+    <p class="state">Todavía no hay partidas registradas.</p>
+  } @else {
+    <app-standings-table [rows]="records.value()" />
+    <p class="legend">
+      1 punto por baja, 1 por victoria y −1 por morir en la zona. El daño es la suma del daño realizado.
+    </p>
+  }
+  <p class="admin-link"><a routerLink="/admin">Administración</a></p>
+</section>

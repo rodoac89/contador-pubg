@@ -1,0 +1,97 @@
+.board {
+  margin-top: 2.5rem;
+  max-width: 68rem;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.lede,
+.legend,
+.state {
+  color: #b7b1a4;
+}
+
+.lede {
+  margin: 0.35rem 0 1.25rem;
+}
+
+.state-error {
+  color: #ffb4a2;
+}
+
+.retry {
+  margin-top: 0.75rem;
+  border: 1px solid #ffcc34;
+  background: transparent;
+  color: #ffcc34;
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+}
+
+.retry:hover {
+  background: #ffcc34;
+  color: #000;
+}
+
+.matches-link {
+  margin: 0 0 1.25rem;
+}
+
+.matches-link a {
+  display: inline-block;
+  border: 1px solid #ffcc34;
+  color: #ffcc34;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.55rem 0.9rem;
+}
+
+.matches-link a:hover,
+.matches-link a:focus-visible {
+  background: #ffcc34;
+  color: #000;
+}
+
+.legend {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+}
+
+.admin-link {
+  margin: 2rem 0 0;
+}
+
+.admin-link a {
+  color: #8f8a80;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.admin-link a:hover {
+  color: #ffcc34;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

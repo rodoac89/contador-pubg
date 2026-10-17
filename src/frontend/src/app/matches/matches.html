@@ -1,0 +1,68 @@
+<section class="board" aria-labelledby="matches-title">
+  <p class="back"><a routerLink="/">Posiciones</a></p>
+  <h1 id="matches-title">Partidas</h1>
+  <p class="lede">
+    Cada tabla es el puntaje de una partida, de la más reciente a la más antigua. Incluye las de
+    calentamiento.
+  </p>
+  @if (signedIn) {
+    <p class="lede">
+      Puedes quitar una partida inválida. Deja de contar y una carga masiva no la vuelve a traer.
+    </p>
+  }
+
+  @if (actionError()) {
+    <p class="state state-error" role="alert">{{ actionError() }}</p>
+  }
+
+  @if (boards.error()) {
+    <p class="state state-error" role="alert">No se pudieron cargar las partidas.</p>
+    <button type="button" class="retry" (click)="boards.reload()">Reintentar</button>
+  } @else if (boards.isLoading()) {
+    <p class="state">Cargando partidas…</p>
+  } @else if (boards.value().length === 0) {
+    <p class="state">Todavía no hay partidas registradas.</p>
+  } @else {
+    <div class="stack">
+      @for (match of boards.value(); track match.matchId) {
+        <article class="match" [class.warmup]="match.training">
+          <header>
+            <div>
+              <time [attr.datetime]="match.createdAt">{{ formatDate(match.createdAt) }}</time>
+              <h2>{{ match.mapName }}</h2>
+              @if (match.training) {
+                <p class="badge">Calentamiento</p>
+              }
+            </div>
+            @if (signedIn) {
+              @if (confirming() === match.matchId) {
+                <div class="confirm">
+                  <p>¿Quitar esta partida?</p>
+                  <button
+                    type="button"
+                    class="discard"
+                    [disabled]="deleting() === match.matchId"
+                    (click)="discard(match)"
+                  >
+                    Quitar
+                  </button>
+                  <button type="button" class="retry" (click)="cancel()">Cancelar</button>
+                </div>
+              } @else {
+                <button type="button" class="discard" (click)="ask(match.matchId)">Eliminar</button>
+              }
+            }
+          </header>
+          @if (match.rows.length === 0) {
+            <p class="state">Esta partida no tiene jugadores.</p>
+          } @else {
+            <app-standings-table [rows]="match.rows" [caption]="caption(match)" />
+          }
+        </article>
+      }
+    </div>
+    <p class="legend">
+      1 punto por baja, 1 por victoria y −1 por morir en la zona. El daño es el de esa partida.
+    </p>
+  }
+</section>

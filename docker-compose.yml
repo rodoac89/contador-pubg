@@ -1,0 +1,30 @@
+name: contador-pubg
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.dockerfile
+    image: contador-pubg-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend.dockerfile
+    image: contador-pubg-backend
+    restart: unless-stopped
+    network_mode: service:frontend
+    depends_on:
+      - frontend
+    environment:
+      DJANGO_DEBUG: "False"
+      SQLITE_PATH: /data/db.sqlite3
+      PUBG_API_KEY: "pubg-api-key-obtained-from-pubg-developer-portal"
+    volumes:
+      - contador-data:/data
+
+volumes:
+  contador-data:

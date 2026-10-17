@@ -1,0 +1,37 @@
+<div class="table-wrap">
+  <table>
+    <caption class="sr-only">{{ caption() }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Jugador</th>
+        <th scope="col" class="num">Puntaje</th>
+        <th scope="col" class="num">Daño</th>
+        <th scope="col" class="num">Partidas</th>
+        <th scope="col" class="num">Bajas</th>
+        <th scope="col" class="num">Victorias</th>
+        <th scope="col" class="num">Zona</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.player; let position = $index) {
+        <tr
+          [class.rank-1]="position === 0"
+          [class.rank-2]="position === 1"
+          [class.rank-3]="position === 2"
+        >
+          <td class="pos">{{ position + 1 }}</td>
+          <td class="player">
+            <a [routerLink]="['/jugador', row.player]">{{ row.player }}</a>
+          </td>
+          <td class="num score">{{ row.score }}</td>
+          <td class="num">{{ formatDamage(row.damage) }}</td>
+          <td class="num">{{ row.matches }}</td>
+          <td class="num">{{ row.kills }}</td>
+          <td class="num">{{ row.wins }}</td>
+          <td class="num">{{ row.zoneDeaths }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

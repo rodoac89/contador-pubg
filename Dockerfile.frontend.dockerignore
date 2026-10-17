@@ -1,0 +1,9 @@
+.git
+src/frontend/.angular
+src/frontend/.vscode
+src/frontend/dist
+src/frontend/node_modules
+src/backend
+.env
+**/.env
+**/.env.*

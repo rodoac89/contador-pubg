@@ -1,0 +1,13 @@
+.git
+src/frontend
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.pytest_cache
+**/.angular
+**/node_modules
+.env
+**/.env
+**/.env.*
+src/backend/db.sqlite3

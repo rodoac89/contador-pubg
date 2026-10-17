@@ -1,0 +1,61 @@
+<section class="board" aria-labelledby="player-title">
+  <p class="back"><a routerLink="/">Posiciones</a></p>
+  <h1 id="player-title">{{ playerName() }}</h1>
+  <p class="lede">
+    De la más reciente a la más antigua. Las de calentamiento se muestran y no suman en la tabla.
+  </p>
+
+  @if (history.status() === 'error') {
+    <p class="state state-error" role="alert">
+      {{ notFound() ? 'No se encontró el jugador.' : 'No se pudieron cargar las partidas.' }}
+    </p>
+    @if (!notFound()) {
+      <button type="button" class="retry" (click)="history.reload()">Reintentar</button>
+    }
+  } @else if (history.isLoading()) {
+    <p class="state">Cargando partidas…</p>
+  } @else if (matches(); as played) {
+    @if (played.length === 0) {
+      <p class="state">Este jugador no tiene partidas registradas.</p>
+    } @else {
+      <div class="mosaic">
+        @for (match of played; track match.matchId) {
+          <article class="tile" [class.warmup]="match.training">
+            <header>
+              <time [attr.datetime]="match.createdAt">{{ formatDate(match.createdAt) }}</time>
+              <p class="map">{{ match.mapName }}</p>
+              @if (match.training) {
+                <p class="badge">Calentamiento</p>
+              }
+            </header>
+            <table>
+              <caption class="sr-only">
+                {{ match.mapName }} del {{ formatDate(match.createdAt) }}
+                @if (match.training) {
+                  , calentamiento
+                }
+              </caption>
+              <tbody>
+                <tr>
+                  <th scope="row">Puntos</th>
+                  <td class="num points">{{ match.points }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Murió por zona</th>
+                  <td class="num" [class.zone-yes]="match.zoneDeath">
+                    {{ match.zoneDeath ? 'Sí' : 'No' }}
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Daño</th>
+                  <td class="num">{{ formatDamage(match.damage) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+        }
+      </div>
+      <p class="legend">1 punto por baja, 1 por victoria y −1 por morir en la zona.</p>
+    }
+  }
+</section>
