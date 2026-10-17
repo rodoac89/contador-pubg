@@ -13,4 +13,4 @@ FROM nginx:alpine
 COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/contador/browser /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 8030

@@ -12,14 +12,14 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./{APP_DIRECTORY}/backend/db.sqlite3:/app/db.sqlite3
+      - ./DATA/AppData/contador-pubg/db.sqlite3:/app/db.sqlite3
     command: >
       sh -c "python manage.py migrate &&
              exec gunicorn cpoints.wsgi:application --bind 0.0.0.0:8000 --workers 4"
     restart: unless-stopped
 
   frontend:
-    image: ea.rodoaravena.cl/rodoac/contador-pubg-frontend:latest
+    image: tea.rodoaravena.cl/rodoac/contador-pubg-frontend:latest
     ports:
       - "4200:80"
     depends_on:
