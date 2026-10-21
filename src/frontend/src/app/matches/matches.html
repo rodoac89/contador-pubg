@@ -2,8 +2,8 @@
   <p class="back"><a routerLink="/">Posiciones</a></p>
   <h1 id="matches-title">Partidas</h1>
   <p class="lede">
-    Cada tabla es el puntaje de una partida, de la más reciente a la más antigua. Incluye las de
-    calentamiento.
+    Agrupadas por día, de la más reciente a la más antigua. Abre el día que quieras ver. Incluye las
+    de calentamiento.
   </p>
   @if (signedIn) {
     <p class="lede">
@@ -24,41 +24,56 @@
     <p class="state">Todavía no hay partidas registradas.</p>
   } @else {
     <div class="stack">
-      @for (match of boards.value(); track match.matchId) {
-        <article class="match" [class.warmup]="match.training">
-          <header>
-            <div>
-              <time [attr.datetime]="match.createdAt">{{ formatDate(match.createdAt) }}</time>
-              <h2>{{ match.mapName }}</h2>
-              @if (match.training) {
-                <p class="badge">Calentamiento</p>
-              }
-            </div>
-            @if (signedIn) {
-              @if (confirming() === match.matchId) {
-                <div class="confirm">
-                  <p>¿Quitar esta partida?</p>
-                  <button
-                    type="button"
-                    class="discard"
-                    [disabled]="deleting() === match.matchId"
-                    (click)="discard(match)"
-                  >
-                    Quitar
-                  </button>
-                  <button type="button" class="retry" (click)="cancel()">Cancelar</button>
-                </div>
-              } @else {
-                <button type="button" class="discard" (click)="ask(match.matchId)">Eliminar</button>
-              }
+      @for (day of days(); track day.key) {
+        <details class="day">
+          <summary class="day-summary">
+            <h2 class="day-title" [id]="'day-' + day.key">
+              <span class="chevron" aria-hidden="true"></span>
+              <time [attr.datetime]="day.key">{{ day.label }}</time>
+              <span class="day-count">{{ matchCount(day.matches.length) }}</span>
+            </h2>
+          </summary>
+          <div class="day-matches">
+            @for (match of day.matches; track match.matchId) {
+              <article class="match" [class.warmup]="match.training">
+                <header>
+                  <div>
+                    <time [attr.datetime]="match.createdAt">{{ formatTime(match.createdAt) }}</time>
+                    <h3 class="map-name">{{ match.mapName }}</h3>
+                    @if (match.training) {
+                      <p class="badge">Calentamiento</p>
+                    }
+                  </div>
+                  @if (signedIn) {
+                    @if (confirming() === match.matchId) {
+                      <div class="confirm">
+                        <p>¿Quitar esta partida?</p>
+                        <button
+                          type="button"
+                          class="discard"
+                          [disabled]="deleting() === match.matchId"
+                          (click)="discard(match)"
+                        >
+                          Quitar
+                        </button>
+                        <button type="button" class="retry" (click)="cancel()">Cancelar</button>
+                      </div>
+                    } @else {
+                      <button type="button" class="discard" (click)="ask(match.matchId)">
+                        Eliminar
+                      </button>
+                    }
+                  }
+                </header>
+                @if (match.rows.length === 0) {
+                  <p class="state">Esta partida no tiene jugadores.</p>
+                } @else {
+                  <app-standings-table [rows]="match.rows" [caption]="caption(match)" />
+                }
+              </article>
             }
-          </header>
-          @if (match.rows.length === 0) {
-            <p class="state">Esta partida no tiene jugadores.</p>
-          } @else {
-            <app-standings-table [rows]="match.rows" [caption]="caption(match)" />
-          }
-        </article>
+          </div>
+        </details>
       }
     </div>
     <p class="legend">

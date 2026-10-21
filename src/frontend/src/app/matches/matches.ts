@@ -1,5 +1,5 @@
 import { HttpClient, httpResource } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { errorDetail, session } from '../session';
@@ -12,6 +12,12 @@ export interface MatchBoard {
   createdAt: string;
   training: boolean;
   rows: PlayerRecord[];
+}
+
+interface MatchDay {
+  key: string;
+  label: string;
+  matches: MatchBoard[];
 }
 
 @Component({
@@ -33,15 +39,26 @@ export class Matches {
     defaultValue: [],
   });
 
+  protected readonly days = computed(() => groupByDate(this.boards.value()));
+
   protected formatDate(value: string): string {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) {
       return value;
     }
-    return new Intl.DateTimeFormat('es-CL', {
-      dateStyle: 'short',
-      timeStyle: 'short',
-    }).format(date);
+    return dateTimeFormat.format(date);
+  }
+
+  protected formatTime(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+    return timeFormat.format(date);
+  }
+
+  protected matchCount(count: number): string {
+    return count === 1 ? '1 partida' : `${count} partidas`;
   }
 
   protected caption(match: MatchBoard): string {
@@ -74,6 +91,50 @@ export class Matches {
       },
     });
   }
+}
+
+const dateTimeFormat = new Intl.DateTimeFormat('es-CL', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
+
+const timeFormat = new Intl.DateTimeFormat('es-CL', {
+  timeStyle: 'short',
+});
+
+const dayFormat = new Intl.DateTimeFormat('es-CL', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+function groupByDate(matches: MatchBoard[]): MatchDay[] {
+  const groups: MatchDay[] = [];
+  const byDay = new Map<string, MatchDay>();
+  for (const match of matches) {
+    const date = new Date(match.createdAt);
+    const valid = !Number.isNaN(date.getTime());
+    const key = valid ? localDayKey(date) : match.createdAt;
+    let group = byDay.get(key);
+    if (!group) {
+      group = {
+        key,
+        label: valid ? dayFormat.format(date) : match.createdAt,
+        matches: [],
+      };
+      byDay.set(key, group);
+      groups.push(group);
+    }
+    group.matches.push(match);
+  }
+  return groups;
+}
+
+function localDayKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
 function parseBoards(value: unknown): MatchBoard[] {
