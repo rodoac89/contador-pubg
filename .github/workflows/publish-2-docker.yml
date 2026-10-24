@@ -32,7 +32,9 @@ jobs:
           file: Dockerfile.frontend
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/{{ secrets.REGISTRY_USER }}/contador-pubg-frontend:latest
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/contador-pubg-frontend:latest
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/contador-pubg-frontend:${{ github.sha }}
+
       - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
@@ -40,4 +42,5 @@ jobs:
           file: Dockerfile.backend
           push: true
           tags: |
-            ${{ secrets.REGISTRY_URL }}/{{ secrets.REGISTRY_USER }}/contador-pubg-backend:latest
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/contador-pubg-backend:latest
+            ${{ secrets.REGISTRY_URL }}/${{ secrets.REGISTRY_USER }}/contador-pubg-backend:${{ github.sha }}
